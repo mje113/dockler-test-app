@@ -19,14 +19,19 @@ cat > railsapp/Dockerfile <<EOF
 FROM ubuntu
 
 RUN apt-get update
-RUN apt-get install -y curl
-RUN curl -L https://get.rvm.io | bash -s head --ruby=2.0
+RUN apt-get install -y curl git libc6-dev libssl-dev make build-essential libssl-dev libreadline6-dev zlib1g-dev libyaml-dev
 
-ADD app/ /opt/testapp/
+RUN echo "gem: --no-ri --no-rdoc" > /.gemrc
+RUN mkdir -p /opt/ruby
+RUN git clone https://github.com/sstephenson/ruby-build.git
+RUN cd ruby-build && ./install.sh
+RUN ruby-build 2.0.0-p247 /opt/ruby
+RUN /opt/ruby/bin/gem install bundler
 
-RUN cd /opt/testapp && /usr/local/rvm/bin/bundle
+ADD app /opt/app
+RUN cd /opt/app && /opt/ruby/bin/bundle install
 
-CMD cd /opt/testapp && /opt/testapp/script/rails s
+CMD ruby /opt/testapp/script/rails s
 EXPOSE 3000:8080
 EOF
 
